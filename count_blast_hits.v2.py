@@ -21,7 +21,11 @@ import pandas as pd
 dic = {}
 plot = {}
 dic['1-Querylength'] = {}
+plot['1-Querylength'] = {}
 blast_tab_list = []
+#scratch = os.path.basename(args.scratch) #specify blast output folder
+suffix = ''
+
 
 def main():
     
@@ -33,13 +37,16 @@ def main():
     listGenomes = parseGenomes(args.genomes)
     for genome in listGenomes:
         files_to_blast = [queryFile, genome]
-        blast_tab_file = doBlast(files_to_blast)
+        returned = doBlast(files_to_blast)
+        
+        blast_tab_file = returned[0]
+        suffix = returned[1]
         blast_tab_list.append(blast_tab_file)
         
     for blast_result in blast_tab_list: #iterate through blast results list
 #         blast_result = blast_result.rstrip()
         genome_name = blast_result.split('.vs.')[1] #reverse format blast_result name to parse out genome name
-        genome_name = re.sub(r"\.blastn\.tab\.test$", r"", genome_name)
+        genome_name = re.sub('\.' + suffix, '', genome_name)
         
         if blast_result not in dic: #initialise dic for blast result
             dic[genome_name] = {}
@@ -127,20 +134,25 @@ def doBlast(inputList):
     if args.verbose: print "with options: %s" % (blastOptionsPre)
     
     blast_out = "%s.vs.%s.%s.%s.tab.test" % (queryName, subjecName, blastOptions, blastType)
+    suffix = "%s.%s.tab.test" % (blastOptions, blastType)
     
     if os.path.exists(blast_out): #check if blast output exists
         if args.verbose: warning("Existing blast results detected, skipping...")
         pass
+    else:    
+        #run BLAST
+        #make blastDB
+        #print "making blast db for: " + subjecFile
+        subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
     
-    #run BLAST
-    #make blastDB
-    #print "making blast db for: " + subjecFile
-    subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
+        subprocess.Popen("%s -query %s -db %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
+        #print "%s -query %s -subject %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre) #uncomment to print blast command
     
-    subprocess.Popen("%s -query %s -db %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
-    #print "%s -query %s -subject %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre) #uncomment to print blast command
+    returnList = []
+    returnList.append(blast_out)
+    returnList.append(suffix)
     
-    return blast_out
+    return returnList #return the blast output filename AND the suffix
 
 
             
@@ -153,7 +165,7 @@ def parseGenomes(dir):
     for type in recognizedFileTypes:
         files_grabbed.extend(glob.glob(os.path.join(dir, '') + type))
         
-    if not files_grabbed:  error("no fasta files found. Use fa, fna, fasta, fas, gbk or gb extension")
+    if not files_grabbed:  error("No fasta files found. Use fa, fna, fasta, fas, gbk or gb extension")
     
     return files_grabbed
 
@@ -183,13 +195,15 @@ def process_hit(hit, blast_result, genome_name):
     qseqid = qseqid_list[1]
 
     dic['1-Querylength'][qseqid] = qlen
+    plot['1-Querylength'][qseqid] = qlen
 
     if checkHit(elements):
-        if args.verbose: print "%s passed. %s mismatches and %s gaps across %s for query length %s" % (qseqid, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
         pident = float(pident)
         length = int(length)
         qlen = int(qlen)
         tol = ((pident*length)/qlen) #threshold value/formula
+        
+        if args.verbose: print "Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
 
 #This big parses all the hits showing the presence of multiple copies/hits
         if not qseqid in dic[genome_name]: #check if the query already has a previous hit
@@ -290,7 +304,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='''
 Script to identify the presence of a panel of query genes across a large number of whole genomes. 
   
-Requires: blast on your path
+Requires: blast on your path.
 
 Requires the spaces to be removed after the commas in seqfindr. 
     ''', formatter_class=RawTextHelpFormatter)

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+#Script to identify the presence of a panel of query genes across a large number of whole genomes. 
+
+
 import sys
 import re
 import os
@@ -14,7 +17,6 @@ import argparse
 from argparse import RawTextHelpFormatter
 
 import pandas as pd
-import numpy as np 
 
 dic = {}
 plot = {}
@@ -37,7 +39,7 @@ def main():
     for blast_result in blast_tab_list: #iterate through blast results list
 #         blast_result = blast_result.rstrip()
         genome_name = blast_result.split('.vs.')[1] #reverse format blast_result name to parse out genome name
-        genome_name = re.sub(r"\.\.blastn\.tab\.test", r"", genome_name)
+        genome_name = re.sub(r"\.blastn\.tab\.test$", r"", genome_name)
         
         if blast_result not in dic: #initialise dic for blast result
             dic[genome_name] = {}
@@ -164,8 +166,8 @@ def checkHit(hitline):
     tolValue = float(args.tol)
     
     if tol >= tolValue:
-        print "Tol: " + str(tol)
-        print "Pident: " + str(pident)
+        #print "Tol: " + str(tol)
+        #print "Pident: " + str(pident)
         return True
     else:
         return False
@@ -176,14 +178,14 @@ def process_hit(hit, blast_result, genome_name):
     
     #Check and process qseqid
     
-    if not qseqid.count(',') == 3: error("The headers of %s do not contain 4 comma-separated values. Please use the seqfindr input format and ensure no spaces occurr in between commas. BLAST stops parsing header" % (qseqid)) 
+    if not qseqid.count(',') == 3: error("Please ensure that your fasta headers contain 4 comma-separated values. Please refer to the seqfindr input format and ensure no spaces occur before the 3 commas. BLAST stops parsing header" % (qseqid)) 
     qseqid_list = qseqid.split(',') #replace comma at the end of query ID. Based on a query header formatted for Seqfindr
     qseqid = qseqid_list[1]
 
     dic['1-Querylength'][qseqid] = qlen
 
     if checkHit(elements):
-        print "%s passed. %s mismatches and %s gaps across %s for query length %s" % (qseqid, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
+        if args.verbose: print "%s passed. %s mismatches and %s gaps across %s for query length %s" % (qseqid, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
         pident = float(pident)
         length = int(length)
         qlen = int(qlen)
@@ -286,7 +288,7 @@ def warning(message):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='''
-Report blast results in a table
+Script to identify the presence of a panel of query genes across a large number of whole genomes. 
   
 Requires: blast on your path
 

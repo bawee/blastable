@@ -131,7 +131,11 @@ def doBlast(inputList):
         pass
     
     #run BLAST
-    subprocess.Popen("%s -query %s -subject %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
+    #make blastDB
+    #print "making blast db for: " + subjecFile
+    subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
+    
+    subprocess.Popen("%s -query %s -db %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
     #print "%s -query %s -subject %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre) #uncomment to print blast command
     
     return blast_out
@@ -140,11 +144,12 @@ def doBlast(inputList):
             
 
 def parseGenomes(dir):
-    print "Looking for genomes/sequences in: " + args.genomes
+    
+    print "Looking for genomes/sequences in: " + os.path.join(dir, '')
     recognizedFileTypes = ('*.fas', '*.fna','*.fa','*.fasta', '*.gb', '*.gbk')
     files_grabbed = []
     for type in recognizedFileTypes:
-        files_grabbed.extend(glob.glob(dir + type))
+        files_grabbed.extend(glob.glob(os.path.join(dir, '') + type))
         
     if not files_grabbed:  error("no fasta files found. Use fa, fna, fasta, fas, gbk or gb extension")
     

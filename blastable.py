@@ -8,14 +8,9 @@ import re
 import os
 import glob
 import subprocess
-
-
 from Bio import SeqIO
-#from Bio.Blast import NCBIXML
-
 import argparse
 from argparse import RawTextHelpFormatter
-
 import pandas as pd
 
 dic = {}
@@ -23,7 +18,7 @@ plot = {}
 dic['1-Querylength'] = {}
 plot['1-Querylength'] = {}
 blast_tab_list = []
-#scratch = os.path.basename(args.scratch) #specify blast output folder
+scratch = os.path.basename("scratch") #specify blast output folder
 suffix = ''
 
 
@@ -52,7 +47,11 @@ def main():
             dic[genome_name] = {}
             plot[genome_name] = {}
     
-        resultFH = open(blast_result, 'r') #open blast result tab file
+#         print "Looking for blast hit in " + scratch + "/" + blast_result
+#         if not os.path.exists(scratch): os.makedirs(scratch) and warning("Output folder does not exist, creating one...")
+#         resultFH = open(scratch + "/" + blast_result, 'r') #open blast result tab file with the directory prefix
+#     
+        resultFH = open(blast_result, 'r')
         for hit in resultFH: #go through hits in a blast_result file
             process_hit(hit, blast_result, genome_name) #feed the hitline and the name of the blast result file to process_hit()
             #print "Processing: " + blast_result
@@ -314,6 +313,7 @@ Requires the spaces to be removed after the commas in seqfindr.
     parser.add_argument('genomes', action="store", help="Directory/Folder containing genomes (fasta format)")
 
     parser.add_argument("-i", "--input", action="store", required=True, help="Input blast query. E.g. panel of genes formatted for SeqFindr. REQUIRED")
+    parser.add_argument("-o", "--output", action="store", required=False, help="Output directory for BLAST results")
     parser.add_argument("-t", "--tol", action="store", default="60", help="TOL cut-off value. Number of aligned bases/total query length")
     parser.add_argument("-f", "--flags", action="store", help="Custom BLAST options, enclosed in quotes. E.g. -f '-task blastn -evalue 0.001'")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Verbose mode")

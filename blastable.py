@@ -20,13 +20,14 @@ plot['1-Querylength'] = {}
 blast_tab_list = []
 scratch = os.path.basename("scratch") #specify blast output folder
 suffix = ''
+sorter = []
 
 
 def main():
     
     #read in input query for blast
     queryFile = args.input
-    
+    checkFastaHeaders(queryFile) #check query file fasta headers format. 
     
     #read dir with genomes and make blast do blast
     listGenomes = parseGenomes(args.genomes)
@@ -55,14 +56,20 @@ def main():
         for hit in resultFH: #go through hits in a blast_result file
             process_hit(hit, blast_result, genome_name) #feed the hitline and the name of the blast result file to process_hit()
             #print "Processing: " + blast_result
+    
+    #Sort dataframe columns
+    
     df = pd.DataFrame(dic).T
     df.fillna(0, inplace=True)
-    df.to_csv("allHits.csv")
+    df = df[sorter]
+    df.to_csv("allHits.tsv", sep='\t')
+    
     
     plotdf = pd.DataFrame(plot).T
     plotdf.fillna(0, inplace=True)
-    plotdf.to_csv("topHit.csv")
-    
+    plotdf = plotdf[sorter]
+    plotdf.to_csv("topHit.tsv", sep='\t')
+
     
     
     if args.plot: # do something with matplotlib here to generate a heatmap
@@ -144,9 +151,8 @@ def doBlast(inputList):
         #print "making blast db for: " + subjecFile
         subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
     
-        subprocess.Popen("%s -query %s -db %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
+        subprocess.Popen('%s -query %s -db %s -outfmt "6 std qlen" -out %s %s' % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
         #print "%s -query %s -subject %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre) #uncomment to print blast command
-    
     returnList = []
     returnList.append(blast_out)
     returnList.append(suffix)
@@ -154,7 +160,31 @@ def doBlast(inputList):
     return returnList #return the blast output filename AND the suffix
 
 
+def checkFastaHeaders(queryFile): #check query fasta headers, if not compatible, make new query file. 
+    warningCount = 0
+    warningMessages = []
+    for qline in open(queryFile, 'r'):
+   
+        if (re.search(" ", qline)):
+            warningMessages.append("%s This header contains spaces, please remove spaces" % (qline))
+            warningCount += 1  
+        if (re.search(",,", qline)):
+            warningMessages.append("%s This header contains two consecutive commas, please put some text in between commas." % (qline))
+            warningCount += 1
+        else:
+            pass
+         
+    if warningCount > 0:
+        print "%s incompatible headers were detected. Please check incompatible_headers.log" % (warningCount)
             
+        with open('incompatible_headers.log', 'w') as errorLogFH:
+            errorLogFH.write('\n'.join(warningMessages))
+    
+        error("Plese fix fasta headers before continuing.")
+       
+    else:
+        pass   
+        
 
 def parseGenomes(dir):
     
@@ -188,11 +218,11 @@ def process_hit(hit, blast_result, genome_name):
     (qseqid, sseqid, pident, length, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore, qlen) = elements #assign hit line to meaningful variable names
     
     #Check and process qseqid
-    
-    if not qseqid.count(',') == 3: error("Please ensure that your fasta headers contain 4 comma-separated values. Please refer to the seqfindr input format and ensure no spaces occur before the 3 commas. BLAST stops parsing header" % (qseqid)) 
+    if not qseqid.count(',') == 3: error('Please ensure that your fasta headers contain 4 comma-separated values. Please refer to the seqfindr input format and ensure no spaces occur before the 3 commas.') 
     qseqid_list = qseqid.split(',') #replace comma at the end of query ID. Based on a query header formatted for Seqfindr
     qseqid = qseqid_list[1]
 
+    if qseqid not in sorter: sorter.append(qseqid)
     dic['1-Querylength'][qseqid] = qlen
     plot['1-Querylength'][qseqid] = qlen
 
@@ -210,18 +240,18 @@ def process_hit(hit, blast_result, genome_name):
             tol = str(tol)
             dic[genome_name][qseqid] = tol
         else:                               #if there IS a previous hit, stick the two numbers together. 
-             tol = int(tol)
-             tol = str(tol)
-             existingtol = str(dic[genome_name][qseqid])
-             newtol = '%s:%s' % (existingtol, tol) #stick two tol values together
-             dic[genome_name][qseqid] = newtol
+            tol = int(tol)
+            tol = str(tol)
+            existingtol = str(dic[genome_name][qseqid])
+            newtol = '%s,%s' % (existingtol, tol) #stick two tol values together
+            dic[genome_name][qseqid] = newtol
 
 #This bit only parses the top hit, ignoring all other hits even if they are above the tolValue
 
         if not qseqid in plot[genome_name]: #check if the query already has a previous hit
             plot[genome_name][qseqid] = int(tol)
         else:                               #if there IS a previous hit, stick the two numbers together. 
-            plot[genome_name][qseqid] = int(tol)
+            pass
 #              tol = int(tol)
 #              tol = str(tol)
 #              existingtol = str(plot[genome_name][qseqid])

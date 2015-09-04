@@ -252,11 +252,7 @@ def process_hit(hit, blast_result, genome_name):
             plot[genome_name][qseqid] = int(tol)
         else:                               #if there IS a previous hit, stick the two numbers together. 
             pass
-#              tol = int(tol)
-#              tol = str(tol)
-#              existingtol = str(plot[genome_name][qseqid])
-#              newtol = '%s:%s' % (existingtol, tol) #stick two tol values together
-#              plot[genome_name][qseqid] = newtol
+
     
     return plot
     return dic

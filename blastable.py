@@ -49,7 +49,7 @@ def main():
         if blast_result not in dic: #initialise dic for blast result
             dic[genome_name] = {}
             plot[genome_name] = {}
-    
+                
 #         print "Looking for blast hit in " + scratch + "/" + blast_result
 #         if not os.path.exists(scratch): os.makedirs(scratch) and warning("Output folder does not exist, creating one...")
 #         resultFH = open(scratch + "/" + blast_result, 'r') #open blast result tab file with the directory prefix
@@ -59,8 +59,16 @@ def main():
             process_hit(hit, blast_result, genome_name) #feed the hitline and the name of the blast result file to process_hit()
             #print "Processing: " + blast_result
     
-    #Sort dataframe columns
     
+    #Checks if there are any queries without hits and inserts a 0.    
+    for q in sorter:
+        for key in dic.keys():
+            if q not in dic[key].keys():
+                dic[key][q] = 0
+                plot[key][q] = 0
+             
+    #Sort dataframe columns
+
     df = pd.DataFrame(dic).T
     df.fillna(0, inplace=True)
     df = df[sorter]

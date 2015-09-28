@@ -3,8 +3,9 @@
 #Script to identify the presence of a panel of query genes across a large number of whole genomes. 
 
 #v0.1 - Initial version
-#v0.2 - Sorts blast results based on the input sequence. 
-#v0.3 - Handles empty columns. I.e. Queries with no hits in any of the genomes.
+#v0.2 - Sorts blast results based on the input sequence. (28 Sep 2015)
+#v0.3 - Handles empty columns. I.e. Queries with no hits in any of the genomes (28 Sep 2015).
+#v0.4 - Prints BLAST results into a separate folder within the working directory. (28 Sep 2015)
 
 import sys
 import re
@@ -21,10 +22,10 @@ plot = {}
 dic['1-Querylength'] = {}
 plot['1-Querylength'] = {}
 blast_tab_list = []
-scratch = os.path.basename("scratch") #specify blast output folder
+
 suffix = ''
 sorter = []
-
+scratch = 'blast_results'
 
 def main():
     
@@ -32,7 +33,6 @@ def main():
     queryFile = args.input
     checkFastaHeaders(queryFile) #check query file fasta headers format. 
     processQueryHeaders(queryFile) #reads in list of gene names/ids to sort final output. Also checks for duplicates
-    
     
     #read dir with genomes and make blast do blast
     listGenomes = parseGenomes(args.genomes)
@@ -53,11 +53,7 @@ def main():
             dic[genome_name] = {}
             plot[genome_name] = {}
                 
-#         print "Looking for blast hit in " + scratch + "/" + blast_result
-#         if not os.path.exists(scratch): os.makedirs(scratch) and warning("Output folder does not exist, creating one...")
-#         resultFH = open(scratch + "/" + blast_result, 'r') #open blast result tab file with the directory prefix
-#     
-        resultFH = open(blast_result, 'r')
+        resultFH = open(scratch + "/" + blast_result, 'r')
         for hit in resultFH: #go through hits in a blast_result file
             process_hit(hit, blast_result, genome_name) #feed the hitline and the name of the blast result file to process_hit()
             #print "Processing: " + blast_result
@@ -155,7 +151,7 @@ def doBlast(inputList):
     blast_out = "%s.vs.%s.%s.%s.tab.test" % (queryName, subjecName, blastOptions, blastType)
     suffix = "%s.%s.tab.test" % (blastOptions, blastType)
     
-    if os.path.exists(blast_out): #check if blast output exists
+    if os.path.exists(scratch + "/" + blast_out): #check if blast output exists
         if args.verbose: warning("Existing blast results detected, skipping...")
         pass
     else:    
@@ -163,9 +159,11 @@ def doBlast(inputList):
         #make blastDB
         #print "making blast db for: " + subjecFile
         subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
-    
-        subprocess.Popen('%s -query %s -db %s -outfmt "6 std qlen" -out %s %s' % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre), shell=True).wait()
+
+        subprocess.Popen('mkdir ./%s' % (scratch), shell=True).wait()
+        subprocess.Popen('%s -query %s -db %s -outfmt "6 std qlen" -out %s/%s %s' % (blastType, queryFile, subjecFile, scratch, blast_out, blastOptionsPre), shell=True).wait()
         #print "%s -query %s -subject %s -outfmt '6 std qlen' -out %s %s" % (blastType, queryFile, subjecFile, blast_out, blastOptionsPre) #uncomment to print blast command
+        
     returnList = []
     returnList.append(blast_out)
     returnList.append(suffix)
@@ -253,7 +251,7 @@ def process_hit(hit, blast_result, genome_name):
         qlen = int(qlen)
         tol = ((pident*length)/qlen) #threshold value/formula
         
-        if args.verbose: print "Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
+        #if args.verbose: print "Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
 
 #This big parses all the hits showing the presence of multiple copies/hits
         if not qseqid in dic[genome_name]: #check if the query already has a previous hit
@@ -354,7 +352,7 @@ Requires: blast on your path.
 
 Requires the spaces to be removed after the commas in seqfindr.
 
-v0.3
+v0.4
     ''', formatter_class=RawTextHelpFormatter)
         
     
@@ -362,7 +360,6 @@ v0.3
     parser.add_argument('genomes', action="store", help="Directory/Folder containing genomes (fasta format)")
 
     parser.add_argument("-i", "--input", action="store", required=True, help="Input blast query. E.g. panel of genes formatted for SeqFindr. REQUIRED")
-    parser.add_argument("-o", "--output", action="store", required=False, help="Output directory for BLAST results")
     parser.add_argument("-t", "--tol", action="store", default="60", help="TOL cut-off value. Number of aligned bases/total query length")
     parser.add_argument("-f", "--flags", action="store", help="Custom BLAST options, enclosed in quotes. E.g. -f '-task blastn -evalue 0.001'")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Verbose mode")

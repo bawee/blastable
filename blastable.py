@@ -28,6 +28,8 @@ def main():
     #read in input query for blast
     queryFile = args.input
     checkFastaHeaders(queryFile) #check query file fasta headers format. 
+    processQueryHeaders(queryFile) #reads in list of gene names/ids to sort final output. Also checks for duplicates
+    
     
     #read dir with genomes and make blast do blast
     listGenomes = parseGenomes(args.genomes)
@@ -184,7 +186,15 @@ def checkFastaHeaders(queryFile): #check query fasta headers, if not compatible,
        
     else:
         pass   
-        
+       
+def processQueryHeaders(queryFile):
+    for qline2 in open(queryFile, 'r'):
+        if (re.search("^>", qline2)):
+            qlineList = qline2.split(',')
+            if qlineList[1] not in sorter: sorter.append(qlineList[1])
+            else: error("Sorry, there are issues with your input file format. This gene name/ID is not unique: " + qlineList[1])
+        else:
+            pass
 
 def parseGenomes(dir):
     
@@ -222,7 +232,7 @@ def process_hit(hit, blast_result, genome_name):
     qseqid_list = qseqid.split(',') #replace comma at the end of query ID. Based on a query header formatted for Seqfindr
     qseqid = qseqid_list[1]
 
-    if qseqid not in sorter: sorter.append(qseqid)
+    #if qseqid not in sorter: sorter.append(qseqid)
     dic['1-Querylength'][qseqid] = qlen
     plot['1-Querylength'][qseqid] = qlen
 

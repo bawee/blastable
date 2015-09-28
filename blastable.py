@@ -2,6 +2,9 @@
 
 #Script to identify the presence of a panel of query genes across a large number of whole genomes. 
 
+#v0.1 - Initial version
+#v0.2 - Sorts blast results based on the input sequence. 
+#v0.3 - Handles empty columns. I.e. Queries with no hits in any of the genomes.
 
 import sys
 import re
@@ -349,7 +352,9 @@ Script to identify the presence of a panel of query genes across a large number 
   
 Requires: blast on your path.
 
-Requires the spaces to be removed after the commas in seqfindr. 
+Requires the spaces to be removed after the commas in seqfindr.
+
+v0.3
     ''', formatter_class=RawTextHelpFormatter)
         
     

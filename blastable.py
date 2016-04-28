@@ -19,8 +19,8 @@ import pandas as pd
 
 dic = {}
 plot = {}
-dic['1-Querylength'] = {}
-plot['1-Querylength'] = {}
+dic[' Querylength'] = {}
+plot[' Querylength'] = {}
 blast_tab_list = []
 
 suffix = ''
@@ -242,8 +242,8 @@ def process_hit(hit, blast_result, genome_name):
     qseqid = qseqid_list[1]
 
     #if qseqid not in sorter: sorter.append(qseqid)
-    dic['1-Querylength'][qseqid] = qlen
-    plot['1-Querylength'][qseqid] = qlen
+    dic[' Querylength'][qseqid] = qlen
+    plot[' Querylength'][qseqid] = qlen
 
     if checkHit(elements):
         pident = float(pident)
@@ -360,7 +360,7 @@ v0.4
     parser.add_argument('genomes', action="store", help="Directory/Folder containing genomes (fasta format)")
 
     parser.add_argument("-i", "--input", action="store", required=True, help="Input blast query. E.g. panel of genes formatted for SeqFindr. REQUIRED")
-    parser.add_argument("-t", "--tol", action="store", default="60", help="TOL cut-off value. Number of aligned bases/total query length")
+    parser.add_argument("-t", "--tol", action="store", default="60", help="TOL cut-off value. Number of aligned bases/total query length. Default 60 pct [60]")
     parser.add_argument("-f", "--flags", action="store", help="Custom BLAST options, enclosed in quotes. E.g. -f '-task blastn -evalue 0.001'")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Verbose mode")
     parser.add_argument("-p", "--plot", action="store_true", default=False, help="plot heatmap")

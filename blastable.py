@@ -6,6 +6,7 @@
 #v0.2 - Sorts blast results based on the input sequence. (28 Sep 2015)
 #v0.3 - Handles empty columns. I.e. Queries with no hits in any of the genomes (28 Sep 2015).
 #v0.4 - Prints BLAST results into a separate folder within the working directory. (28 Sep 2015)
+#v0.5 - Also performs blastp. Removed seqfindr format requirement (17 May 2018)
 
 import sys
 import re
@@ -158,7 +159,11 @@ def doBlast(inputList):
         #run BLAST
         #make blastDB
         #print "making blast db for: " + subjecFile
-        subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
+        
+        if blastType in ('blastp'):
+            subprocess.Popen("makeblastdb -dbtype prot -in %s" % (subjecFile), shell=True).wait()
+        if blastType in ('blastn', 'tblastx'):
+            subprocess.Popen("makeblastdb -dbtype nucl -in %s" % (subjecFile), shell=True).wait()
 
         subprocess.Popen('mkdir ./%s' % (scratch), shell=True).wait()
         subprocess.Popen('%s -query %s -db %s -outfmt "6 std qlen" -out %s/%s %s' % (blastType, queryFile, subjecFile, scratch, blast_out, blastOptionsPre), shell=True).wait()
@@ -208,7 +213,7 @@ def processQueryHeaders(queryFile):
 def parseGenomes(dir):
     
     print "Looking for genomes/sequences in: " + os.path.join(dir, '')
-    recognizedFileTypes = ('*.fas', '*.fna','*.fa','*.fasta', '*.gb', '*.gbk')
+    recognizedFileTypes = ('*.faa', '*.fas', '*.fna','*.fa','*.fasta', '*.gb', '*.gbk')
     files_grabbed = []
     for type in recognizedFileTypes:
         files_grabbed.extend(glob.glob(os.path.join(dir, '') + type))
@@ -237,9 +242,9 @@ def process_hit(hit, blast_result, genome_name):
     (qseqid, sseqid, pident, length, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore, qlen) = elements #assign hit line to meaningful variable names
     
     #Check and process qseqid
-    if not qseqid.count(',') == 3: error('Please ensure that your fasta headers contain 4 comma-separated values. Please refer to the seqfindr input format and ensure no spaces occur before the 3 commas.') 
+    if not qseqid.count(',') == 1: error('Please ensure that your fasta headers contain 2 comma-separated values. Text between the > symbol and the first comma (,) will be used as a unique identifier.') 
     qseqid_list = qseqid.split(',') #replace comma at the end of query ID. Based on a query header formatted for Seqfindr
-    qseqid = qseqid_list[1]
+    qseqid = qseqid_list[0]
 
     #if qseqid not in sorter: sorter.append(qseqid)
     dic[' Querylength'][qseqid] = qlen
@@ -251,7 +256,7 @@ def process_hit(hit, blast_result, genome_name):
         qlen = int(qlen)
         tol = ((pident*length)/qlen) #threshold value/formula
         
-        #if args.verbose: print "Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
+        if args.verbose: print "Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
 
 #This big parses all the hits showing the presence of multiple copies/hits
         if not qseqid in dic[genome_name]: #check if the query already has a previous hit
@@ -364,7 +369,7 @@ v0.4
     parser.add_argument("-f", "--flags", action="store", help="Custom BLAST options, enclosed in quotes. E.g. -f '-task blastn -evalue 0.001'")
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help="Verbose mode")
     parser.add_argument("-p", "--plot", action="store_true", default=False, help="plot heatmap")
-    parser.add_argument("-b", "--blast", action="store", default="blastn", choices=("blastn", "tblastx"), help="Blast program to use. Default [blastn]")
+    parser.add_argument("-b", "--blast", action="store", default="blastn", choices=("blastn", "blastp", "tblastx"), help="Blast program to use. Default [blast]")
     
     args = parser.parse_args()
 

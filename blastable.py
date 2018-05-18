@@ -205,8 +205,8 @@ def processQueryHeaders(queryFile):
     for qline2 in open(queryFile, 'r'):
         if (re.search("^>", qline2)):
             qlineList = qline2.split(',')
-            if qlineList[1] not in sorter: sorter.append(qlineList[1])
-            else: error("Sorry, there are issues with your input file format. This gene name/ID is not unique: " + qlineList[1])
+            if qlineList[0] not in sorter: sorter.append(qlineList[0])
+            else: error("Sorry, there are issues with your input file format. This gene name/ID is not unique: " + qlineList[0])
         else:
             pass
 
@@ -242,7 +242,7 @@ def process_hit(hit, blast_result, genome_name):
     (qseqid, sseqid, pident, length, mismatch, gapopen, qstart, qend, sstart, send, evalue, bitscore, qlen) = elements #assign hit line to meaningful variable names
     
     #Check and process qseqid
-    if not qseqid.count(',') == 1: error('Please ensure that your fasta headers contain 2 comma-separated values. Text between the > symbol and the first comma (,) will be used as a unique identifier.') 
+    /if not qseqid.count(',') == 1: error('Please ensure that your fasta headers contain 2 comma-separated values. Text between the > symbol and the first comma (,) will be used as a unique identifier.') 
     qseqid_list = qseqid.split(',') #replace comma at the end of query ID. Based on a query header formatted for Seqfindr
     qseqid = qseqid_list[0]
 

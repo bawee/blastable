@@ -205,8 +205,9 @@ def processQueryHeaders(queryFile):
     for qline2 in open(queryFile, 'r'):
         if (re.search("^>", qline2)):
             qlineList = qline2.split(',')
-            if qlineList[0] not in sorter: sorter.append(qlineList[0])
-            else: error("Sorry, there are issues with your input file format. This gene name/ID is not unique: " + qlineList[0])
+            qline_id = qlineList[0][1:]
+            if qline_id not in sorter: sorter.append(qline_id)
+            else: error("Sorry, there are issues with your input file format. This gene name/ID is not unique: " + qline_id)
         else:
             pass
 

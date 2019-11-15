@@ -1,6 +1,9 @@
 # blastable
 Generates tables of blast hits.
 
+Note: The default threshold is 60% average sequence identity of the alignment divided by the length of the query. 
+
+`thresh = ((pident*HSPlength)/qlen)`
 
 ## Example usage
 

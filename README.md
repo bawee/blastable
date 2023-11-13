@@ -37,9 +37,10 @@ Before the query fasta file can be used with blastable.py:
 2. [Biopython](http://biopython.org/DIST/docs/install/Installation.html#sec14)
 3. [Pandas](http://pandas.pydata.org/) - Python library for data analysis
 
-You can use pip, a python package manager, to install `pandas`
-
+`conda install -c bioconda blast`
+`conda install -c bioconda biopython`
 `conda install -c bioconda pandas`
+
 
 
 ## Version History

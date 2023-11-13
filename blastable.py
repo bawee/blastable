@@ -48,7 +48,7 @@ def main():
     for blast_result in blast_tab_list: #iterate through blast results list
 #         blast_result = blast_result.rstrip()
         genome_name = blast_result.split('.vs.')[1] #reverse format blast_result name to parse out genome name
-        genome_name = re.sub('\.' + suffix, '', genome_name)
+        genome_name = re.sub('\\.' + suffix, '', genome_name)
         
         if blast_result not in dic: #initialise dic for blast result
             dic[genome_name] = {}
@@ -62,10 +62,10 @@ def main():
     
     #Checks if there are any queries without hits and inserts a 0.    
     for q in sorter:
-        for key in dic.keys():
-            if q not in dic[key].keys():
-                dic[key][q] = 0
-                plot[key][q] = 0
+       for key in list(dic.keys()):
+            if q not in list(dic[key].keys()):
+                 dic[key][q] = 0
+                 plot[key][q] = 0
              
     #Sort dataframe columns
 
@@ -143,11 +143,11 @@ def doBlast(inputList):
     
     blastType = args.blast
     
-    if args.verbose: print "Performing blast"
+    if args.verbose: print("Performing blast")
     blastOptionsPre = (args.flags if args.flags else "")
     blastOptions = re.sub(r"-(\w+)\s", r"\1_", blastOptionsPre)
     blastOptions = re.sub(r"\s+", r".", blastOptions)
-    if args.verbose: print "with options: %s" % (blastOptionsPre)
+    if args.verbose: print("with options: %s" % (blastOptionsPre))
     
     blast_out = "%s.vs.%s.%s.%s.tab.test" % (queryName, subjecName, blastOptions, blastType)
     suffix = "%s.%s.tab.test" % (blastOptions, blastType)
@@ -191,7 +191,7 @@ def checkFastaHeaders(queryFile): #check query fasta headers, if not compatible,
             pass
          
     if warningCount > 0:
-        print "%s incompatible headers were detected. Please check incompatible_headers.log" % (warningCount)
+        print("%s incompatible headers were detected. Please check incompatible_headers.log" % (warningCount))
             
         with open('incompatible_headers.log', 'w') as errorLogFH:
             errorLogFH.write('\n'.join(warningMessages))
@@ -213,7 +213,7 @@ def processQueryHeaders(queryFile):
 
 def parseGenomes(dir):
     
-    print "Looking for genomes/sequences in: " + os.path.join(dir, '')
+    print("Looking for genomes/sequences in: " + os.path.join(dir, ''))
     recognizedFileTypes = ('*.faa', '*.fas', '*.fna','*.fa','*.fasta', '*.gb', '*.gbk')
     files_grabbed = []
     for type in recognizedFileTypes:
@@ -257,7 +257,7 @@ def process_hit(hit, blast_result, genome_name):
         qlen = int(qlen)
         tol = ((pident*length)/qlen) #threshold value/formula
         
-        if args.verbose: print "Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12]) #print info about hit that passed filter
+        if args.verbose: print("Query %s has a hit above the cutoff in %s. TOL: %s. %s mismatches and %s gaps across %s for query of length %s" % (qseqid, sseqid, tol, elements[4], elements[5], elements[3], elements[12])) #print info about hit that passed filter
 
 #This big parses all the hits showing the presence of multiple copies/hits
         if not qseqid in dic[genome_name]: #check if the query already has a previous hit

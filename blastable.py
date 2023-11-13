@@ -229,7 +229,7 @@ def checkHit(hitline):
     qlen = int(hitline[12])
     tol = ((pident*length)/qlen) #threshold value/formula
     
-    tolValue = float(args.tol)
+    tolValue = float(args.thresh)
     
     if tol >= tolValue:
         #print "Tol: " + str(tol)

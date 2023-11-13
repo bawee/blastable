@@ -7,6 +7,7 @@
 #v0.3 - Handles empty columns. I.e. Queries with no hits in any of the genomes (28 Sep 2015).
 #v0.4 - Prints BLAST results into a separate folder within the working directory. (28 Sep 2015)
 #v0.5 - Also performs blastp. Removed seqfindr format requirement (17 May 2018)
+#v0.6 - Updated to Python3 (13 Nov 2023)
 
 import sys
 import re
